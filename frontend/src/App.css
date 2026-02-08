@@ -2,7 +2,16 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
-  text-align: center;
+  /*text-align: center;*/
+}
+
+h1 {
+    color: #333333; /* Dark gray text color */
+    font-family: 'Arial', sans-serif; /* Specify a font family */
+    font-size: 48px; /* Set the font size in pixels */
+    text-align: center; /* Center the text */
+    text-decoration: underline; /* Add an underline */
+    margin-top: 0.5em; /* Adjust top margin */
 }
 
 .logo {
@@ -40,3 +49,4 @@
 .read-the-docs {
   color: #888;
 }
+

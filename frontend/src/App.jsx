@@ -12,7 +12,7 @@ function Landingpage({ onNavigate }) {
     </div>
     </div>
   );
-
+  
 }
 
 function App() {
