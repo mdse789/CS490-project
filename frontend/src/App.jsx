@@ -6,7 +6,6 @@ function Landingpage({ onNavigate }) {
   return (
     <div>
         <h1>Welcome to the Rental Store</h1>
-  
     <div>
     <button onClick={() => onNavigate("films")}>Films</button>
     <button onClick={() => onNavigate("customer")}>Customer Page</button>
