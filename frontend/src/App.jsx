@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
+import FilmsPage from "./FilmsPage";
+import CustomerPage from "./CustomerPage";
 
-function Landingpage() {
+function Landingpage({ onNavigate }) {
   return (
     <div>
         <h1>Welcome to the Rental Store</h1>
-    
+  
     <div>
-    <button onClick={() =>console.log("Go to Films")} >Films </button>
-    <button onClick={() =>console.log("Go to Customer Page")} >Customer Page</button>
+    <button onClick={() => onNavigate("films")}>Films</button>
+    <button onClick={() => onNavigate("customer")}>Customer Page</button>
     </div>
     </div>
   );
@@ -15,16 +17,25 @@ function Landingpage() {
 }
 
 function App() {
-  const [message, setMessage] = useState("");
+  const [view, setView] = useState("home");
 
-  useEffect(() => {
+  /*useEffect(() => {
     fetch("http://localhost:5000/")
       .then(res => res.json())
       .then(data => setMessage(data.message))
       .catch(err => console.error(err));
-  }, []);
+  }, []);*/
 
-  return <Landingpage/>;
+ return (
+    <div>
+     <div>
+      {view === "home" && <Landingpage onNavigate={setView} />}
+      {view === "films" && <FilmsPage onBack={() => setView("home")} />}
+      {view === "customer" && <CustomerPage onBack={() => setView("home")} />}  
+    </div>
+      
+    </div>
+  );
 }
 
 export default App;
