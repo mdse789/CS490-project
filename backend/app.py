@@ -81,7 +81,6 @@ def top_films_rented():
          .order_by(db.desc('rented'), Film.title.asc()) \
          .limit(5).all()
 
-        # Format for React
     output = []
     for row in results:
         output.append({
