@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
@@ -10,6 +10,7 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)   # allow requests from React
 
+# Database Connection
 user = os.getenv('DB_USER')
 password = os.getenv('DB_PASSWORD')
 host = os.getenv('DB_HOST')
@@ -45,12 +46,26 @@ class Rental(db.Model):
     rental_id = db.Column(db.Integer, primary_key=True)
     inventory_id = db.Column(db.Integer, db.ForeignKey('inventory.inventory_id'), primary_key=True)
 
-
 @app.route("/")
 def home():
     return jsonify({"message": "Testing Flask"})
 
-# Top 5 most rented films 
+@app.route('/api/films')
+def get_sakila_films():
+    user_search = request.args.get('search', '')
+    
+    results = Film.query.filter(Film.title.like(f"%{user_search}%")).all()
+    
+    output = []
+    for film in results:
+        output.append({
+            "id": film.film_id,
+            "title": film.title,
+            "description": film.description,
+            "year": film.release_year
+        })
+    return jsonify(output)
+
 @app.route("/top5films")
 def top_films_rented():
     results = db.session.query(
@@ -80,4 +95,3 @@ def top_films_rented():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
-
