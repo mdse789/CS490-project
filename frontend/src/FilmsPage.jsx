@@ -5,7 +5,7 @@ function FilmsPage({ onBack }) {
   const [films, setFilms] = useState([]);
 
   const fetchFilms = (query = "") => {
-    fetch(`http://localhost:5000/api/films?search=${query}`)
+      fetch(`http://127.0.0.1:5000/api/films?search=${query}`)
       .then((res) => res.json())
       .then((data) => setFilms(data))
       .catch((err) => console.error("Error fetching films:", err));
