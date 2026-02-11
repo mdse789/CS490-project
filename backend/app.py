@@ -3,7 +3,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
-from sqlalchemy import func
+from sqlalchemy import or_, func
 
 load_dotenv() 
 
@@ -54,6 +54,17 @@ class Rental(db.Model):
     rental_id = db.Column(db.Integer, primary_key=True)
     inventory_id = db.Column(db.Integer, db.ForeignKey('inventory.inventory_id'), primary_key=True)
 
+class FilmActor(db.Model):
+    __tablename__ = 'film_actor'
+    actor_id = db.Column(db.Integer,primary_key=True)
+    film_id = db.Column(db.Integer,primary_key=True)
+
+class Actor(db.Model):
+    __tablename__ = 'actor' 
+    actor_id = db.Column(db.Integer,primary_key=True)
+    first_name = db.Column(db.Text)
+    last_name = db.Column(db.Text)
+
 @app.route("/")
 def home():
     return jsonify({"message": "Testing Flask"})
@@ -62,7 +73,26 @@ def home():
 def get_sakila_films():
     user_search = request.args.get('search', '')
     
-    results = Film.query.filter(Film.title.like(f"%{user_search}%")).all()
+    results = db.session.query(
+            Film.film_id,
+            Film.title,
+            Film.description,
+            func.max(Category.name).label('category'),
+            func.max(Actor.first_name).label('first_name'),
+            func.max(Actor.last_name).label('last_name')
+        ).join(FilmCategory, Film.film_id == FilmCategory.film_id)\
+         .join(Category, FilmCategory.category_id == Category.category_id) \
+         .join(FilmActor, Film.film_id == FilmActor.film_id) \
+         .join(Actor, FilmActor.actor_id == Actor.actor_id) \
+         .filter( or_ (
+            Film.title.like(f"%{user_search}%"),
+            Actor.first_name.like(f"%{user_search}%"),
+            Actor.last_name.like(f"%{user_search}%"),
+            Category.name.like(f"%{user_search}%"),
+        ))\
+         .group_by(Film.film_id)\
+         .order_by(Film.title.asc()) \
+         .all()
     
     output = []
     for film in results:
@@ -70,7 +100,7 @@ def get_sakila_films():
             "id": film.film_id,
             "title": film.title,
             "description": film.description,
-            "year": film.release_year
+            #"year": film.release_year
         })
     return jsonify(output)
 
@@ -89,6 +119,7 @@ def top_films_rented():
          .order_by(db.desc('rented'), Film.title.asc()) \
          .limit(5).all()
 
+        # Format for React
     output = []
     for row in results:
         output.append({
