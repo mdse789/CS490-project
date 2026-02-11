@@ -25,6 +25,14 @@ class Film(db.Model):
     __tablename__ = 'film'
     film_id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.Text)
+    description = db.Column(db.Text)                      
+    release_year = db.Column(db.Integer)                  
+    rental_duration = db.Column(db.Integer)           
+    length = db.Column(db.Integer)                   
+    replacement_cost = db.Column(db.Numeric(5,2))          
+    rating = db.Column(db.String(10))                     
+    special_features = db.Column(db.String(255))          
+    last_update = db.Column(db.DateTime)
 
 class FilmCategory(db.Model):
     __tablename__ = 'film_category'
@@ -81,7 +89,6 @@ def top_films_rented():
          .order_by(db.desc('rented'), Film.title.asc()) \
          .limit(5).all()
 
-        # Format for React
     output = []
     for row in results:
         output.append({
