@@ -65,6 +65,35 @@ class Actor(db.Model):
     first_name = db.Column(db.Text)
     last_name = db.Column(db.Text)
 
+class Customer(db.Model):
+    __tablename__ = 'customer' 
+    customer_id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(45))
+    last_name = db.Column(db.String(45)) 
+    email = db.Column(db.String(50))
+    address_id = db.Column(db.Integer, db.ForeignKey('address.address_id'))
+
+class Address(db.Model):
+    __tablename__ = 'address' 
+    address_id = db.Column(db.Integer, primary_key=True)
+    address = db.Column(db.String(50))
+    address2 = db.Column(db.String(50))
+    district = db.Column(db.String(20))
+    city_id = db.Column(db.Integer, db.ForeignKey('city.city_id'))
+    postal_code = db.Column(db.String(50))
+    phone = db.Column(db.String(50))
+
+class City(db.Model):
+    __tablename__ = 'city' 
+    city_id = db.Column(db.Integer, primary_key=True)
+    city = db.Column(db.String(50))
+    country_id = db.Column(db.Integer, db.ForeignKey('country.country_id'))
+
+class Country(db.Model):
+    __tablename__ = 'country'
+    country_id = db.Column(db.Integer, primary_key=True)    
+    country = db.Column(db.String(50))
+
 @app.route("/")
 def home():
     return jsonify({"message": "Testing Flask"})
@@ -101,6 +130,74 @@ def get_sakila_films():
             "title": film.title,
             "description": film.description,
             #"year": film.release_year
+        })
+    return jsonify(output)
+
+#film details
+@app.route('/api/film_details')
+def films_details():
+    user_search = request.args.get('search', '')
+    
+    results = db.session.query(
+            Film.film_id,
+            Film.title,
+            Film.description,
+            Film.length,
+            Film.release_year,
+            Film.rating,
+        ).join(FilmCategory, Film.film_id == FilmCategory.film_id)\
+         .join(Category, FilmCategory.category_id == Category.category_id) \
+         .group_by(Film.film_id)\
+         .order_by(Film.title.asc()) \
+         .all()
+    
+    output = []
+    for filmd in results:
+        output.append({
+            "id": filmd.film_id,
+            "title": filmd.title,
+            "description": filmd.description,
+            "year": filmd.release_year,
+            "length": filmd.length,
+            "rating": filmd.rating
+        })
+    return jsonify(output)
+
+#customer details
+@app.route('/api/customer_details')
+def customer_details():
+    user_search = request.args.get('search', '')
+    
+    results = db.session.query(
+            Customer.customer_id,
+            Customer.first_name,
+            Customer.last_name,
+            Customer.email,
+            Address.address,
+            Address.phone,
+            City.city,
+            Country.country
+        ).join(Address, Customer.address_id == Address.address_id) \
+         .join(City, Address.city_id == City.city_id) \
+         .join(Country, City.country_id == Country.country_id) \
+         .filter(or_(
+            Customer.customer_id.like(f"%{user_search}%"),
+            Customer.first_name.like(f"%{user_search}%"),
+            Customer.last_name.like(f"%{user_search}%"),
+            Customer.email.like(f"%{user_search}%")
+         )) \
+         .order_by(Customer.customer_id.asc()) \
+         .all()
+    
+    output = []
+    for customer in results:
+        output.append({
+            "id": customer.customer_id,
+            "first name": customer.first_name,
+            "last name": customer.last_name,
+            "email": customer.email,
+            "address": customer.address,
+            "phone": customer.phone
         })
     return jsonify(output)
 
