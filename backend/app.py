@@ -149,5 +149,31 @@ def top_actors():
             
     return jsonify(output)
 
+@app.route('/api/actors/<int:actor_id>')
+def get_actor_info(actor_id):
+    actor = Actor.query.get(actor_id)
+
+    top_films =db.session.query(
+        Film.film_id,
+        Film.title,
+        func.count(Rental.rental_id).label('rental_count')
+    ).join(FilmActor, Film.film_id == FilmActor.film_id) \
+     .join(Actor, FilmActor.actor_id == Actor.actor_id) \
+     .join(Inventory, Film.film_id == Inventory.film_id) \
+     .join(Rental, Inventory.inventory_id == Rental.inventory_id) \
+     .filter(FilmActor.actor_id == actor_id) \
+     .group_by(Film.title, Film.film_id) \
+     .order_by(db.desc('rental_count')) \
+     .limit(5).all()
+     
+    output = []
+    for row in top_films:
+        output.append({
+            "film_id": row.film_id,
+            "title": row.title,
+            "rental_count": row.rental_count          
+        })    
+    return jsonify(output)
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
