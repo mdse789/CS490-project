@@ -54,6 +54,17 @@ class Rental(db.Model):
     rental_id = db.Column(db.Integer, primary_key=True)
     inventory_id = db.Column(db.Integer, db.ForeignKey('inventory.inventory_id'), primary_key=True)
 
+class Actor(db.Model):
+    __tablename__ = 'actor'
+    actor_id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(45), nullable=False)
+    last_name = db.Column(db.String(45), nullable=False)
+
+class FilmActor(db.Model):
+    __tablename__ = 'film_actor'
+    actor_id = db.Column(db.Integer, db.ForeignKey('actor.actor_id'), primary_key=True)
+    film_id = db.Column(db.Integer, db.ForeignKey('film.film_id'), primary_key=True)
+
 @app.route("/")
 def home():
     return jsonify({"message": "Testing Flask"})
@@ -74,7 +85,7 @@ def get_sakila_films():
         })
     return jsonify(output)
 
-@app.route("/top5films")
+@app.route("/api/top5films")
 def top_films_rented():
     results = db.session.query(
             Film.film_id,
@@ -96,6 +107,44 @@ def top_films_rented():
             "title": row.title,
             "category": row.category,
             "rented": row.rented            
+        })
+            
+    return jsonify(output)
+
+@app.route('/api/films/<int:film_id>')
+def get_film_info(film_id):
+    film = Film.query.get(film_id)
+        
+    return jsonify({
+            "id": film.film_id,
+            "title": film.title,
+            "description": film.description,
+            "release_year": film.release_year,
+            "rating": film.rating,
+            "length": film.length,
+            "replacement_cost": str(film.replacement_cost),
+            "special_features": film.special_features
+        })
+
+@app.route("/api/top5actors")
+def top_actors():
+    results = db.session.query(
+            Actor.actor_id,
+            Actor.first_name,
+            Actor.last_name,
+            func.count(FilmActor.film_id).label('movies')
+        ).join(FilmActor, Actor.actor_id == FilmActor.actor_id) \
+         .group_by(Actor.actor_id) \
+         .order_by(db.desc('movies')) \
+         .limit(5).all()
+
+    output = []
+    for row in results:
+        output.append({
+            "actor_id": row.actor_id,
+            "first_name": row.first_name,
+            "last_name": row.last_name,
+            "movies": row.movies            
         })
             
     return jsonify(output)
