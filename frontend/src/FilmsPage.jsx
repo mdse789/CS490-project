@@ -13,14 +13,19 @@ function FilmsPage({ onBack }) {
 
   return (
  <div>
+
+  <button onClick={onBack}>Back to Home</button>
+
+
+
 <div className="films-page-container">
-      <button onClick={onBack}>Back to Home</button>
+      
       <h1>Film Search</h1>
-      <p1>Searching films name only</p1>
+      <p1>Enter Film Name, Actor Name or Genre</p1>
       <div className="search-bar">
         <input
           type="text"
-          placeholder="Search Actor Name"
+          placeholder="Search"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -30,6 +35,7 @@ function FilmsPage({ onBack }) {
       <div className="results-list">
         {films.map((film) => (
           <div key={film.id} className="film-card">
+            <h2>{"Id: "} {film.id}</h2>
             <h3>{film.title} ({film.year})</h3>
             <p>{film.description}</p>
           </div>
@@ -40,6 +46,8 @@ function FilmsPage({ onBack }) {
  </div>
   );
 }
+
+
 
 
 export default FilmsPage;
