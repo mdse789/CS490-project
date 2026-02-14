@@ -164,6 +164,45 @@ def films_details():
     return jsonify(output)
 
 #customer details
+@app.route('/api/customer_all')
+def customer_all():
+    page = request.args.get('page', 1, type=int)
+    total_records =  db.session.query(func.count(Customer.customer_id)).scalar()
+    limitss = 20
+    offset_value = (page - 1) * limitss
+
+    results = db.session.query(
+            Customer.customer_id,
+            Customer.first_name,
+            Customer.last_name,
+            Customer.email,
+            Address.address,
+            Address.phone,
+            City.city,
+            Country.country
+        ).join(Address, Customer.address_id == Address.address_id) \
+         .join(City, Address.city_id == City.city_id) \
+         .join(Country, City.country_id == Country.country_id) \
+         .order_by(Customer.customer_id.asc()) \
+         .limit(limitss) \
+         .offset(offset_value) \
+         .all()
+
+    customer = [{
+            "id": customerall.customer_id,
+            "first_name": customerall.first_name,
+            "last_name": customerall.last_name,
+            "email": customerall.email,
+            "address": customerall.address,
+            "phone": customerall.phone
+        } for customerall in results] 
+    
+    return jsonify({
+        "customers": customer,
+        "total_records": total_records,
+        "total_pages": (total_records + limitss - 1) // limitss 
+    })
+
 @app.route('/api/customer_details')
 def customer_details():
     user_search = request.args.get('search', '')
@@ -193,8 +232,8 @@ def customer_details():
     for customer in results:
         output.append({
             "id": customer.customer_id,
-            "first name": customer.first_name,
-            "last name": customer.last_name,
+            "first_name": customer.first_name,
+            "last_name": customer.last_name,
             "email": customer.email,
             "address": customer.address,
             "phone": customer.phone
