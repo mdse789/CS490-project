@@ -105,7 +105,7 @@ def get_sakila_films():
     results = db.session.query(
             Film.film_id,
             Film.title,
-            Film.description,
+            Film.release_year,
             func.max(Category.name).label('category'),
             func.max(Actor.first_name).label('first_name'),
             func.max(Actor.last_name).label('last_name')
@@ -114,6 +114,7 @@ def get_sakila_films():
          .join(FilmActor, Film.film_id == FilmActor.film_id) \
          .join(Actor, FilmActor.actor_id == Actor.actor_id) \
          .filter( or_ (
+            Film.film_id.like(f"%{user_search}%"),
             Film.title.like(f"%{user_search}%"),
             Actor.first_name.like(f"%{user_search}%"),
             Actor.last_name.like(f"%{user_search}%"),
@@ -128,47 +129,41 @@ def get_sakila_films():
         output.append({
             "id": film.film_id,
             "title": film.title,
-            "description": film.description,
-            #"year": film.release_year
+            "year": film.release_year
         })
     return jsonify(output)
 
 #film details
-@app.route('/api/film_details')
-def films_details():
-    user_search = request.args.get('search', '')
-    
-    results = db.session.query(
+@app.route('/api/film_details/<int:id>') 
+def films_details(id):
+   
+    film = db.session.query(
             Film.film_id,
             Film.title,
             Film.description,
             Film.length,
             Film.release_year,
             Film.rating,
-        ).join(FilmCategory, Film.film_id == FilmCategory.film_id)\
-         .join(Category, FilmCategory.category_id == Category.category_id) \
-         .group_by(Film.film_id)\
-         .order_by(Film.title.asc()) \
-         .all()
+        ).filter(Film.film_id == id).first() 
+
+    if not film:
+        return jsonify({"error": "Film not found"}), 404
     
-    output = []
-    for filmd in results:
-        output.append({
-            "id": filmd.film_id,
-            "title": filmd.title,
-            "description": filmd.description,
-            "year": filmd.release_year,
-            "length": filmd.length,
-            "rating": filmd.rating
-        })
-    return jsonify(output)
+    return jsonify({
+        "id": film.film_id,
+        "title": film.title,
+        "description": film.description,
+        "year": film.release_year,
+        "length": film.length,
+        "rating": film.rating
+    })
 
 #customer details
 @app.route('/api/customer_all')
 def customer_all():
     page = request.args.get('page', 1, type=int)
     total_records =  db.session.query(func.count(Customer.customer_id)).scalar()
-    limitss = 20
+    limitss = 15
     offset_value = (page - 1) * limitss
 
     results = db.session.query(
