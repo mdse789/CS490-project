@@ -162,47 +162,53 @@ def films_details(id):
 @app.route('/api/customer_all')
 def customer_all():
     page = request.args.get('page', 1, type=int)
-    total_records =  db.session.query(func.count(Customer.customer_id)).scalar()
+    search = request.args.get('search', '')
     limitss = 15
     offset_value = (page - 1) * limitss
 
-    results = db.session.query(
-            Customer.customer_id,
-            Customer.first_name,
-            Customer.last_name,
-            Customer.email,
-            Address.address,
-            Address.phone,
-            City.city,
-            Country.country
-        ).join(Address, Customer.address_id == Address.address_id) \
-         .join(City, Address.city_id == City.city_id) \
-         .join(Country, City.country_id == Country.country_id) \
-         .order_by(Customer.customer_id.asc()) \
-         .limit(limitss) \
-         .offset(offset_value) \
-         .all()
 
-    customer = [{
-            "id": customerall.customer_id,
-            "first_name": customerall.first_name,
-            "last_name": customerall.last_name,
-            "email": customerall.email,
-            "address": customerall.address,
-            "phone": customerall.phone
-        } for customerall in results] 
+    query = db.session.query(
+        Customer.customer_id,
+        Customer.first_name,
+        Customer.last_name,
+        Customer.email,
+        Address.address,
+        Address.phone
+    ).join(Address, Customer.address_id == Address.address_id)
+
+   
+    if search:
+        query = query.filter(or_(
+            Customer.customer_id.like(f"%{search}%"),
+            Customer.first_name.like(f"%{search}%"),
+            Customer.last_name.like(f"%{search}%")
+        ))
+
+    total_records = query.count()
+
+    results = query.order_by(Customer.customer_id.asc()) \
+                   .limit(limitss) \
+                   .offset(offset_value) \
+                   .all()
+
+    customers_list = [{
+        "id": c.customer_id,
+        "first_name": c.first_name,
+        "last_name": c.last_name,
+        "email": c.email
+    } for c in results] 
     
     return jsonify({
-        "customers": customer,
+        "customers": customers_list,
         "total_records": total_records,
         "total_pages": (total_records + limitss - 1) // limitss 
     })
 
-@app.route('/api/customer_details')
-def customer_details():
+@app.route('/api/customer_details/<int:id>')
+def customer_details(id):
     user_search = request.args.get('search', '')
     
-    results = db.session.query(
+    customer = db.session.query(
             Customer.customer_id,
             Customer.first_name,
             Customer.last_name,
@@ -214,26 +220,22 @@ def customer_details():
         ).join(Address, Customer.address_id == Address.address_id) \
          .join(City, Address.city_id == City.city_id) \
          .join(Country, City.country_id == Country.country_id) \
-         .filter(or_(
-            Customer.customer_id.like(f"%{user_search}%"),
-            Customer.first_name.like(f"%{user_search}%"),
-            Customer.last_name.like(f"%{user_search}%"),
-            Customer.email.like(f"%{user_search}%")
-         )) \
-         .order_by(Customer.customer_id.asc()) \
-         .all()
+         .filter(Customer.customer_id == id) \
+         .first()
     
-    output = []
-    for customer in results:
-        output.append({
-            "id": customer.customer_id,
-            "first_name": customer.first_name,
-            "last_name": customer.last_name,
-            "email": customer.email,
-            "address": customer.address,
-            "phone": customer.phone
-        })
-    return jsonify(output)
+    
+    if not customer: 
+        return jsonify({"error": "Film not found"}), 404
+
+    return jsonify({
+        "id": customer.customer_id,
+        "first_name": customer.first_name,
+        "last_name": customer.last_name,
+        "email": customer.email,
+        "address": customer.address,
+        "phone": customer.phone
+    })
+   
 
 @app.route("/top5films")
 def top_films_rented():
