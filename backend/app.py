@@ -65,9 +65,10 @@ class FilmActor(db.Model):
     actor_id = db.Column(db.Integer, db.ForeignKey('actor.actor_id'), primary_key=True)
     film_id = db.Column(db.Integer, db.ForeignKey('film.film_id'), primary_key=True)
 
-@app.route("/")
+'''@app.route("/")
 def home():
     return jsonify({"message": "Testing Flask"})
+'''
 
 @app.route('/api/films')
 def get_sakila_films():
@@ -111,7 +112,7 @@ def top_films_rented():
             
     return jsonify(output)
 
-@app.route('/api/films/<int:film_id>')
+@app.route('/api/films/<int:id>')
 def get_film_info(film_id):
     film = Film.query.get(film_id)
         
@@ -125,6 +126,30 @@ def get_film_info(film_id):
             "replacement_cost": str(film.replacement_cost),
             "special_features": film.special_features
         })
+
+@app.route('/api/film_details/<int:id>') 
+def films_details(id):
+   
+    film = db.session.query(
+            Film.film_id,
+            Film.title,
+            Film.description,
+            Film.length,
+            Film.release_year,
+            Film.rating,
+        ).filter(Film.film_id == id).first() 
+
+    if not film:
+        return jsonify({"error": "Film not found"}), 404
+    
+    return jsonify({
+        "id": film.film_id,
+        "title": film.title,
+        "description": film.description,
+        "year": film.release_year,
+        "length": film.length,
+        "rating": film.rating
+    })
 
 @app.route("/api/top5actors")
 def top_actors():
