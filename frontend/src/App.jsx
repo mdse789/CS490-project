@@ -42,12 +42,12 @@ function Landingpage({ onNavigate }) {
   return (
     <div className="landing-container">
       <div className="title-block">
-      <h1>Welcome to the Rental Store</h1>
+        <h1>Welcome to the Rental Store</h1>
 
-      <div>
-        <button onClick={() => onNavigate("films")}>Films</button>
-        <button onClick={() => onNavigate("customer")}>Customer Page</button>
-      </div>
+        <div>
+          <button onClick={() => onNavigate("films")}>Films</button>
+          <button onClick={() => onNavigate("customer")}>Customer Page</button>
+        </div>
       </div>
 
       <div className="tables-grid">
@@ -114,8 +114,9 @@ function Landingpage({ onNavigate }) {
                 <p><strong>Release Year:</strong> {selectedItem.year}</p>
                 <p><strong>Rating:</strong> {selectedItem.rating}</p>
                 <p><strong>Length:</strong> {selectedItem.length} minutes</p>
-                <p><strong>Replacement Cost: $</strong> {selectedItem.replacement_cost}</p>
-                <p><strong>Special Features:</strong> {selectedItem.special_features}</p>
+                <p><strong>Replacement Cost:</strong> ${selectedItem.replacement_cost}</p>
+                <p><strong>Special Features:</strong> {Array.isArray(selectedItem.special_features) ? selectedItem.special_features.join(', ')
+                  : String(selectedItem.special_features).replace(/[{'}]/g, '')}</p>
               </>
             ) : (
               <div className="actor-details">
