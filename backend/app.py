@@ -153,6 +153,8 @@ def films_details(id):
             Film.length,
             Film.release_year,
             Film.rating,
+            Film.replacement_cost,
+            Film.special_features
         ).filter(Film.film_id == id).first() 
 
     if not film:
@@ -164,7 +166,9 @@ def films_details(id):
         "description": film.description,
         "year": film.release_year,
         "length": film.length,
-        "rating": film.rating
+        "rating": film.rating,
+        "replacement_cost": film.replacement_cost,
+        "special_features": str(film.special_features)
     })
 '''
 @app.route('/api/film_details_ma/<int:id>') 
