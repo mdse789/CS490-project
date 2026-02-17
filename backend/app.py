@@ -54,16 +54,16 @@ class Rental(db.Model):
     rental_id = db.Column(db.Integer, primary_key=True)
     inventory_id = db.Column(db.Integer, db.ForeignKey('inventory.inventory_id'), primary_key=True)
 
-class FilmActor(db.Model):
-    __tablename__ = 'film_actor'
-    actor_id = db.Column(db.Integer,primary_key=True)
-    film_id = db.Column(db.Integer,primary_key=True)
-
 class Actor(db.Model):
     __tablename__ = 'actor' 
-    actor_id = db.Column(db.Integer,primary_key=True)
-    first_name = db.Column(db.Text)
-    last_name = db.Column(db.Text)
+    actor_id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(45), nullable=False)
+    last_name = db.Column(db.String(45), nullable=False)
+
+class FilmActor(db.Model):
+    __tablename__ = 'film_actor'
+    actor_id = db.Column(db.Integer, db.ForeignKey('actor.actor_id'), primary_key=True)
+    film_id = db.Column(db.Integer, db.ForeignKey('film.film_id'), primary_key=True)
 
 class Customer(db.Model):
     __tablename__ = 'customer' 
@@ -94,14 +94,14 @@ class Country(db.Model):
     country_id = db.Column(db.Integer, primary_key=True)    
     country = db.Column(db.String(50))
 
-@app.route("/")
+'''@app.route("/")
 def home():
     return jsonify({"message": "Testing Flask"})
+'''
 
 @app.route('/api/films')
 def get_sakila_films():
     user_search = request.args.get('search', '')
-    
     results = db.session.query(
             Film.film_id,
             Film.title,
@@ -124,16 +124,25 @@ def get_sakila_films():
          .order_by(Film.title.asc()) \
          .all()
     
-    output = []
-    for film in results:
-        output.append({
+    return jsonify([{"id": f.film_id, "title": f.title, "year": f.release_year} for f in results])
+
+
+
+@app.route('/api/films/<int:id>')
+def get_film_info(film_id):
+    film = Film.query.get(film_id)
+        
+    return jsonify({
             "id": film.film_id,
             "title": film.title,
-            "year": film.release_year
+            "description": film.description,
+            "release_year": film.release_year,
+            "rating": film.rating,
+            "length": film.length,
+            "replacement_cost": str(film.replacement_cost),
+            "special_features": film.special_features
         })
-    return jsonify(output)
 
-#film details
 @app.route('/api/film_details/<int:id>') 
 def films_details(id):
    
@@ -157,15 +166,27 @@ def films_details(id):
         "length": film.length,
         "rating": film.rating
     })
-
-#customer details
+'''
+@app.route('/api/film_details_ma/<int:id>') 
+def films_details(id):
+    film = db.session.query(Film).filter(Film.film_id == id).first() 
+    if not film:
+        return jsonify({"error": "Film not found"}), 404
+    return jsonify({
+        "id": film.film_id,
+        "title": film.title,
+        "description": film.description,
+        "year": film.release_year,
+        "length": film.length,
+        "rating": film.rating
+    })
+'''
 @app.route('/api/customer_all')
 def customer_all():
     page = request.args.get('page', 1, type=int)
     search = request.args.get('search', '')
     limitss = 15
     offset_value = (page - 1) * limitss
-
 
     query = db.session.query(
         Customer.customer_id,
@@ -175,8 +196,6 @@ def customer_all():
         Address.address,
         Address.phone
     ).join(Address, Customer.address_id == Address.address_id)
-
-   
     if search:
         query = query.filter(or_(
             Customer.customer_id.like(f"%{search}%"),
@@ -185,7 +204,6 @@ def customer_all():
         ))
 
     total_records = query.count()
-
     results = query.order_by(Customer.customer_id.asc()) \
                    .limit(limitss) \
                    .offset(offset_value) \
@@ -235,9 +253,8 @@ def customer_details(id):
         "address": customer.address,
         "phone": customer.phone
     })
-   
 
-@app.route("/top5films")
+@app.route("/api/top5films")
 def top_films_rented():
     results = db.session.query(
             Film.film_id,
@@ -252,7 +269,6 @@ def top_films_rented():
          .order_by(db.desc('rented'), Film.title.asc()) \
          .limit(5).all()
 
-        # Format for React
     output = []
     for row in results:
         output.append({
@@ -262,6 +278,56 @@ def top_films_rented():
             "rented": row.rented            
         })
             
+    return jsonify(output)
+
+
+@app.route("/api/top5actors")
+def top_actors():
+    results = db.session.query(
+            Actor.actor_id,
+            Actor.first_name,
+            Actor.last_name,
+            func.count(FilmActor.film_id).label('movies')
+        ).join(FilmActor, Actor.actor_id == FilmActor.actor_id) \
+         .group_by(Actor.actor_id) \
+         .order_by(db.desc('movies')) \
+         .limit(5).all()
+
+    output = []
+    for row in results:
+        output.append({
+            "actor_id": row.actor_id,
+            "first_name": row.first_name,
+            "last_name": row.last_name,
+            "movies": row.movies            
+        })
+            
+    return jsonify(output)
+
+@app.route('/api/actors/<int:actor_id>')
+def get_actor_info(actor_id):
+    actor = Actor.query.get(actor_id)
+
+    top_films =db.session.query(
+        Film.film_id,
+        Film.title,
+        func.count(Rental.rental_id).label('rental_count')
+    ).join(FilmActor, Film.film_id == FilmActor.film_id) \
+     .join(Actor, FilmActor.actor_id == Actor.actor_id) \
+     .join(Inventory, Film.film_id == Inventory.film_id) \
+     .join(Rental, Inventory.inventory_id == Rental.inventory_id) \
+     .filter(FilmActor.actor_id == actor_id) \
+     .group_by(Film.title, Film.film_id) \
+     .order_by(db.desc('rental_count')) \
+     .limit(5).all()
+     
+    output = []
+    for row in top_films:
+        output.append({
+            "film_id": row.film_id,
+            "title": row.title,
+            "rental_count": row.rental_count          
+        })    
     return jsonify(output)
 
 if __name__ == "__main__":
