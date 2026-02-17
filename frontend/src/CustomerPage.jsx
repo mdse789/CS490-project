@@ -1,6 +1,7 @@
 /* List all customer using pagination*/
 import { useEffect, useState } from "react";
 import Modal from "./ModalPage";
+import "./FandC.css"
 
 function CustomerPage({ onBack }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -41,13 +42,14 @@ const handleCardClick = (customer) => {
  
 return (
  <div>
-<div className="customer-page-container">
+<div className="customer-page-containerC">
+    <div className="heads">
       <button onClick={onBack}>Back to Home</button>
       <h1>Customer Page</h1>
+    </div>  
       
-      <h2>Customer Search</h2>
-      <p1>Enter Name or Id</p1>
-   <div className="search-bar">
+      <p>Customer Search: Enter Name or Id</p>
+   <div className="search-barC">
   <input
     type="text"
     placeholder="Search name or ID..."
@@ -57,7 +59,7 @@ return (
   <button onClick={handleSearch}>Search</button>
 </div>
 
-      <div className="results-list">
+      <div className="results-listC">
         {customers.map((customer) => (
           <div key={customer.id} className="customer-card" 
           onClick={() =>handleCardClick(customer)}
@@ -91,7 +93,7 @@ return (
           onClose={() => setSelectedCustomer(null)}
       >
           {selectedCustomer && (
-                <div className="modal-inner-content">
+                <div className="modal-inner-contentC">
                   <strong> Id:</strong> {selectedCustomer.id}
                   <h2>{selectedCustomer.first_name} {selectedCustomer.last_name}</h2> 
                   <p>Email:  {selectedCustomer.email} </p>
