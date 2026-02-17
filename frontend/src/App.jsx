@@ -113,8 +113,8 @@ function Landingpage({ onNavigate }) {
                 <p><strong>Description:</strong> {selectedItem.description}</p>
                 <p><strong>Release Year:</strong> {selectedItem.year}</p>
                 <p><strong>Rating:</strong> {selectedItem.rating}</p>
-                <p><strong>Length:</strong> {selectedItem.length}</p>
-                <p><strong>Replacement Cost:</strong> {selectedItem.replacement_cost}</p>
+                <p><strong>Length:</strong> {selectedItem.length} minutes</p>
+                <p><strong>Replacement Cost: $</strong> {selectedItem.replacement_cost}</p>
                 <p><strong>Special Features:</strong> {selectedItem.special_features}</p>
               </>
             ) : (
