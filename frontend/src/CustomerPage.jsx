@@ -8,10 +8,11 @@ function CustomerPage({ onBack }) {
   const [customers, setCustomers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-
+  const [jumpPage, setJumpPage] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   const fetchCustomers = (page, query = "") => {
+    
     fetch(`http://127.0.0.1:5000/api/customer_all?page=${page}&search=${query}`)
       .then((res) => res.json())
       .then((data) => {
@@ -39,6 +40,18 @@ const handleCardClick = (customer) => {
       })
       .catch(err => console.error("Error fetching details:", err));
   };
+
+  const handlePageJump = (e) => {
+  e.preventDefault();
+  const pageNum = parseInt(jumpPage);
+
+  if (pageNum >= 1 && pageNum <= totalPages) {
+    setCurrentPage(pageNum);
+    setJumpPage(""); 
+  } else {
+    alert(`Please enter a page between 1 and ${totalPages}`);
+  }
+};
  
 return (
  <div>
@@ -65,15 +78,25 @@ return (
           onClick={() =>handleCardClick(customer)}
           style={{cursor: 'help'}}
           >
-            <h3>{"Id: "}{customer.id}</h3>
-            <h4>{"Name: "}{customer.first_name} {customer.last_name}</h4>
-            <p>{"Email: "}{customer.email}</p>
+            <p>{"Id: "}{customer.id}</p>
+            <p>{"Name: "}{customer.first_name} {customer.last_name}</p>
           </div>
         ))}
       </div>
     </div>
 
     <div className="pagination-controls">
+
+       <form onSubmit={handlePageJump} style={{ display: 'inline', marginLeft: '15px' }}>
+          <input 
+            type="number" 
+            placeholder="Go to page"
+            value={jumpPage}
+            onChange={(e) => setJumpPage(e.target.value)}
+            style={{ width: '60px', padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+          />
+          <button type="submit" style={{ marginLeft: '5px' }}>Go</button>
+        </form>
         <button 
           disabled={currentPage === 1} 
           onClick={() => setCurrentPage(prev => prev - 1)}

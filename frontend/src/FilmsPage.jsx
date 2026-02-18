@@ -5,11 +5,14 @@ import "./FandC.css"
 function FilmsPage({ onBack }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [films, setFilms] = useState([]);
-
   const [selectedFilm, setSelectedFilm] = useState(null);
   
 
   const fetchFilms = (query = "") => {
+    if (searchTerm.length === 0) {
+      alert("Please movie name, id, actor or genre.");
+      return;
+    }
       fetch(`http://127.0.0.1:5000/api/films?search=${query}`)
       .then((res) => res.json())
       .then((data) => setFilms(data))
@@ -17,7 +20,7 @@ function FilmsPage({ onBack }) {
   };
 
  const handleCardClick = (film) => {
-  fetch(`http://127.0.0.1:5000/api/film_details/${film.id}`)
+    fetch(`http://127.0.0.1:5000/api/film_details/${film.id}`)
     .then(res => res.json())
     .then(fullData => {
       setSelectedFilm(fullData);           

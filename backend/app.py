@@ -102,6 +102,7 @@ def home():
 @app.route('/api/films')
 def get_sakila_films():
     user_search = request.args.get('search', '')
+
     results = db.session.query(
             Film.film_id,
             Film.title,
@@ -124,7 +125,11 @@ def get_sakila_films():
          .order_by(Film.title.asc()) \
          .all()
     
-    return jsonify([{"id": f.film_id, "title": f.title, "year": f.release_year} for f in results])
+    return jsonify([{
+        "id": f.film_id, 
+        "title": f.title, 
+        "year": f.release_year} 
+        for f in results])
 
 
 
@@ -243,7 +248,7 @@ def customer_details(id):
     
     
     if not customer: 
-        return jsonify({"error": "Film not found"}), 404
+        return jsonify({"error": "Customer not found"}), 404
 
     return jsonify({
         "id": customer.customer_id,
