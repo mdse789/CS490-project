@@ -30,9 +30,12 @@ function Landingpage({ onNavigate }) {
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/top5films")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Error fetching films");
+        return res.json();
+      })
       .then(data => setTopFilms(data))
-
+      .catch(err => setError(err.message));
 
 
     fetch("http://127.0.0.1:5000/api/top5actors")
