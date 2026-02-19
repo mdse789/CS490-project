@@ -1,0 +1,140 @@
+.films-page-container h1{
+    color: #000; 
+    font-family: 'Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serifArial'; 
+    font-size: 40px; 
+    text-align: center; 
+}
+
+.films-page-container p{
+    color: #000; 
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif; 
+    font-size: 25px; 
+    text-align: center;
+}
+
+.customer-page-containerC h1{
+    color: #000; 
+    font-family: 'Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serifArial'; 
+    font-size: 40px; 
+    text-align: center; 
+}
+
+.heads{
+    background-color: #004d40bd; 
+}
+
+.customer-page-containerC p{
+    color: #000; 
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif; 
+    font-size: 25px; 
+    text-align: center;
+}
+
+.modal-content {
+  color: #000000;
+  line-height: 1.6;
+}
+
+.results-listF{
+    align-items: center;
+}
+
+.film-card {
+  border-color: #000000;
+  block-size: auto;
+  text-align: center;
+  margin-left: 15px;
+  margin-right: 15px;
+  position:relative;
+  margin: auto;
+  max-width: 500px;
+  margin-bottom: 8px;
+}
+.customer-card{
+  border-color: #000000;
+  block-size: auto;
+  text-align: center;
+  margin-left: 15px;
+  margin-right: 15px;
+  position:relative;
+  margin: auto;
+  max-width: 500px;
+  margin-bottom: 8px;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+.modal-inner-contentF{
+    background-color: #f5f7f3;
+    font-size: 25px;
+}
+
+.modal-inner-contentC{
+    background-color:#f5f7f3;
+}
+
+.films-page-container{
+    position: inherit;
+    box-shadow: #000000;
+    color: #000;
+}
+
+.search-barC {
+  display: flex;
+  align-items: center;
+  padding-bottom: 15px;
+}
+
+.search-barC input {
+  flex: 1;                
+  font-size: 15px;        
+  padding: 12px;  
+}
+
+.search-barC button {
+  font-size: 18px;
+  padding: 12px;
+}
+
+.search-barF {
+  display: flex;
+  align-items: center;
+  padding-bottom: 15px;
+}
+
+.search-barF input {
+  flex: 1;                
+  font-size: 15px;        
+  padding: 12px;     
+}
+
+.search-barF button {
+  font-size: 18px;
+  padding: 12px;
+}
+
+.pagination-controls{
+  background-color: #004d40bd; 
+  align-items: center;
+  font-size: 18px;
+  text-align: center;
+}
+
+.pagination-controls form button {
+  height: 45px;   
+  font-size: 18px;
+  background-color: #013c32;
+  color: white;
+  border: none;
+  border-radius: 8px;
+}
+
+.pagination-controls input[type="number"] {
+  width: 210px;           
+  height: 35px;        
+  background-color: #c7d3cd;              
+  font-size: 15px;        
+  padding: 12px;  
+}
