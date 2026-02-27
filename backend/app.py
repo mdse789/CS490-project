@@ -72,6 +72,8 @@ class Customer(db.Model):
     last_name = db.Column(db.String(45)) 
     email = db.Column(db.String(50))
     address_id = db.Column(db.Integer, db.ForeignKey('address.address_id'))
+    create_date = db.Column(db.DateTime)
+    last_update = db.Column(db.DateTime)
 
 class Address(db.Model):
     __tablename__ = 'address' 
@@ -338,6 +340,103 @@ def get_actor_info(actor_id):
             "rental_count": row.rental_count          
         })    
     return jsonify(output)
+
+#Add new customer
+@app.route('/api/customers', methods=['POST'])
+def add_customer():
+    data = request.get_json()
+    
+    user_country = data.get('country', '').strip().title()
+    user_city = data.get('city', '').strip().title()
+
+    try:
+        country_record = Country.query.filter(func.lower(Country.country) == user_country.lower()).first()
+        
+        if not country_record:
+            return jsonify({"error": f"Country '{user_country}' not found in database"})
+        
+        city_record = City.query.filter(
+            func.lower(City.city) == user_city.lower(), 
+            City.country_id == country_record.country_id
+        ).first()
+
+        if not city_record:
+            city_record = City(city=user_city.title(), country_id=country_record.country_id)
+            db.session.add(city_record)
+            db.session.flush()
+
+        new_address = Address(
+            address=data['address'],
+            address2=data['address2', ''],
+            district=data.get('district'),
+            city_id=city_record.city_id,
+            postal_code=data.get('postal_code', ''),
+            phone=data['phone'] 
+        )
+        db.session.add(new_address)
+        db.session.flush()
+
+        new_customer = Customer(
+            first_name=data['first_name'],
+            last_name=data['last_name'],
+            email=data.get('email'),
+            address_id=new_address.address_id,
+            store_id=1,
+            active=1
+        )
+        db.session.add(new_customer)
+        
+        db.session.commit()
+        return jsonify({"message": "Customer created successfully!", "id": new_customer.customer_id})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)})
+    
+#Edit customer details 
+@app.route('/api/customers/edit/<int:id>', methods=['PUT'])
+def edit_customer(id):
+    data = request.get_json()
+
+    customer = Customer.query.get_or_404(id)
+    address_record = Address.query.get(customer.address_id)
+    
+    try:
+        customer.first_name = data.get('first_name', customer.first_name)
+        customer.last_name = data.get('last_name', customer.last_name)
+        customer.email = data.get('email', customer.email)
+
+       
+        user_country = data.get('country', '').strip()
+        user_city = data.get('city', '').strip()
+
+        if user_country and user_city:
+            country_rec = Country.query.filter(func.lower(Country.country) == user_country.lower()).first()
+            if country_rec:
+                city_rec = City.query.filter(
+                    func.lower(City.city) == user_city.lower(), 
+                    City.country_id == country_rec.country_id
+                ).first()
+                
+                if not city_rec:
+                    city_rec = City(city=user_city.title(), country_id=country_rec.country_id)
+                    db.session.add(city_rec)
+                    db.session.flush()
+                
+                address_record.city_id = city_rec.city_id
+
+        address_record.address = data.get('address', address_record.address)
+        address_record.address2 = data.get('address2', address_record.address2)
+        address_record.postal_code = data.get('postal_code', address_record.postal_code)
+        address_record.phone = data.get('phone', address_record.phone)
+        address_record.district = data.get('district', address_record.district)
+
+        db.session.commit()
+        return jsonify({"message": "Customer updated successfully"})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
