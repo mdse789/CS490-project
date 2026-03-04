@@ -79,6 +79,4 @@ function FilmsPage({ onBack }) {
   );
 }
 
-
-
 export default FilmsPage;

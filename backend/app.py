@@ -52,7 +52,12 @@ class Inventory(db.Model):
 class Rental(db.Model):
     __tablename__ = 'rental'
     rental_id = db.Column(db.Integer, primary_key=True)
-    inventory_id = db.Column(db.Integer, db.ForeignKey('inventory.inventory_id'), primary_key=True)
+    rental_date = db.Column(db.DateTime)
+    inventory_id = db.Column(db.Integer, db.ForeignKey('inventory.inventory_id'))
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.customer_id'))
+    return_date = db.Column(db.DateTime)
+    staff_id = db.Column(db.Integer)
+    last_update = db.Column(db.DateTime)
 
 class Actor(db.Model):
     __tablename__ = 'actor' 
