@@ -4,6 +4,7 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from sqlalchemy import or_, func
+from datetime import datetime
 
 load_dotenv() 
 
@@ -442,6 +443,38 @@ def edit_customer(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)})
+
+@app.route('/api/customer_rentals/<int:id>')
+def get_customer_rentals(id):
+    rentals = db.session.query(
+        Rental.rental_id,
+        Rental.rental_date,
+        Rental.return_date,
+        Film.title
+    ).join(Inventory, Rental.inventory_id == Inventory.inventory_id) \
+     .join(Film, Inventory.film_id == Film.film_id) \
+     .filter(Rental.customer_id == id) \
+     .order_by(Rental.rental_date.desc()).all()
+
+    return jsonify([{
+        "rental_id": rents.rental_id,
+        "title": rents.title,
+        "rental_date": rents.rental_date.strftime('%Y-%m-%d'), 
+        "return_date": rents.return_date.strftime('%Y-%m-%d'),
+        "status": "Returned" if rents.return_date else "Out"
+    } for rents in rentals])      
+
+@app.route('/api/rentals/return/<int:rental_id>', methods=['PUT'])
+def return_film(rental_id):
+    rental = Rental.query.get(rental_id)
+    if not rental:
+        return jsonify({"error": "Rental record not found"}), 404
+    
+    rental.return_date = datetime.now()
+    db.session.commit()
+    return jsonify({"message": "Film returned successfully!"})
+
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

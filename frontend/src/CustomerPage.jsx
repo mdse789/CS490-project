@@ -10,6 +10,7 @@ function CustomerPage({ onBack }) {
   const [totalPages, setTotalPages] = useState(0);
   const [jumpPage, setJumpPage] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [rentalHistory, setRentalHistory] = useState([]);
 
   const fetchCustomers = (page, query = "") => {
     
@@ -31,15 +32,23 @@ function CustomerPage({ onBack }) {
     fetchCustomers(1, searchTerm);
 };
 
+
+const fetchRentalHistory = (customerId) => {
+    fetch(`http://127.0.0.1:5000/api/customer_rentals/${customerId}`)
+      .then(res => res.json())
+      .then(data => setRentalHistory(data))
+      .catch(err => console.error("Error fetching history:", err));
+};
+
 const handleCardClick = (customer) => {
-  
     fetch(`http://127.0.0.1:5000/api/customer_details/${customer.id}`)
       .then(res => res.json())
       .then(fullData => {
         setSelectedCustomer(fullData);
+        fetchRentalHistory(customer.id);
       })
       .catch(err => console.error("Error fetching details:", err));
-  };
+};
 
   const handlePageJump = (e) => {
   e.preventDefault();
@@ -51,6 +60,22 @@ const handleCardClick = (customer) => {
   } else {
     alert(`Please enter a page between 1 and ${totalPages}`);
   }
+};
+
+const handleReturn = (rentalId) => {
+    fetch(`http://127.0.0.1:5000/api/rentals/return/${rentalId}`, {
+ method: 'PUT', 
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            alert("Error: " + data.error);
+        } else {
+            alert(data.message);
+            fetchRentalHistory(selectedCustomer.id);
+        }
+    })
+    .catch(err => console.error("Error returning film:", err));
 };
  
 return (
@@ -86,7 +111,6 @@ return (
     </div>
 
     <div className="pagination-controls">
-
        <form onSubmit={handlePageJump} style={{ display: 'inline', marginLeft: '15px' }}>
           <input 
             type="number" 
@@ -97,26 +121,14 @@ return (
           />
           <button type="submit" style={{ marginLeft: '5px' }}>Go</button>
         </form>
-        <button 
-          disabled={currentPage === 1} 
-          onClick={() => setCurrentPage(prev => prev - 1)}
-        >
-          Previous
-        </button>
+        <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)}> Previous </button>
         <span> Page {currentPage} of {totalPages} </span>
-        <button 
-          disabled={currentPage === totalPages} 
-          onClick={() => setCurrentPage(prev => prev + 1)}>
-          Next
-        </button>
+        <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => prev + 1)}> Next </button>
       </div>
       
-      <Modal 
-          open={selectedCustomer !== null} 
-          onClose={() => setSelectedCustomer(null)}
-      >
+      <Modal open={selectedCustomer !== null} onClose={() => setSelectedCustomer(null)}>
           {selectedCustomer && (
-                <div className="modal-inner-contentC">
+              <div className="modal-inner-contentC">
                   <strong> Id:</strong> {selectedCustomer.id}
                   <h2>{selectedCustomer.first_name} {selectedCustomer.last_name}</h2> 
                   <p>Email:  {selectedCustomer.email} </p>
@@ -124,6 +136,35 @@ return (
                   <p>Phone: {selectedCustomer.phone}</p>
               </div>
             )}
+            <h3>Rental History</h3>
+            <div className="rent-histC">
+              <table className="rental-table">
+                <thead>
+                <tr>
+                  <th>Film Name</th>
+                  <th>Rent date</th>
+                  <th>Return date</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+                </thead>
+              <tbody>
+                  {rentalHistory.map(rental => (
+                    <tr key={rental.rental_id}>
+                      <td>{rental.title}</td>
+                      <td>{rental.rental_date}</td>
+                      <td>{rental.return_date}</td>
+                      <td>{rental.status}</td>
+                      <td>
+                        {!rental.return_date && (
+                          <button onClick={() => handleReturn(rental.rental_id)}>Return</button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </Modal>
 
  </div>

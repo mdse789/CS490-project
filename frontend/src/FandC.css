@@ -72,13 +72,15 @@
 }
 
 .modal-inner-contentC{
-    background-color:#f5f7f3;
+  background-color:#f5f7f3;
+  width: 100%;          /* Percentage of the screen width */
+
 }
 
 .films-page-container{
     position: inherit;
-    box-shadow: #000000;
-    color: #000;
+  box-shadow: #000000;
+  color: #000;
 }
 
 .search-barC {
@@ -137,4 +139,29 @@
   background-color: #c7d3cd;              
   font-size: 15px;        
   padding: 12px;  
+}
+.rent-histC{
+  max-height: 300px;
+  overflow-y: scroll;
+  max-width: 800px;  
+  padding: 15px;
+  margin: auto;
+}
+
+.rental-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.rental-table th, .rental-table td {
+  border: 1px solid #1e806f;
+  padding: 8px;
+  text-align: left;
+}
+
+.rental-table th {
+  background-color: #bfead7;
+  position: sticky;  
+   top: 0;
 }
