@@ -156,7 +156,7 @@ return (
                       <td>{rental.return_date}</td>
                       <td>{rental.status}</td>
                       <td>
-                        {!rental.return_date && (
+                        {rental.return_date === "Still Out" && (
                           <button onClick={() => handleReturn(rental.rental_id)}>Return</button>
                         )}
                       </td>

@@ -9,7 +9,7 @@ from datetime import datetime
 load_dotenv() 
 
 app = Flask(__name__)
-CORS(app)   # allow requests from React
+CORS(app) 
 
 # Database Connection
 user = os.getenv('DB_USER')
@@ -459,8 +459,8 @@ def get_customer_rentals(id):
     return jsonify([{
         "rental_id": rents.rental_id,
         "title": rents.title,
-        "rental_date": rents.rental_date.strftime('%Y-%m-%d'), 
-        "return_date": rents.return_date.strftime('%Y-%m-%d'),
+        "rental_date": rents.rental_date.strftime('%Y-%m-%d') if rents.rental_date else "N/A", 
+        "return_date": rents.return_date.strftime('%Y-%m-%d') if rents.return_date else "Still Out",
         "status": "Returned" if rents.return_date else "Out"
     } for rents in rentals])      
 
@@ -468,13 +468,41 @@ def get_customer_rentals(id):
 def return_film(rental_id):
     rental = Rental.query.get(rental_id)
     if not rental:
-        return jsonify({"error": "Rental record not found"}), 404
+        return jsonify({"error": "No records found"}), 404
     
     rental.return_date = datetime.now()
     db.session.commit()
     return jsonify({"message": "Film returned successfully!"})
 
 
+@app.route('/api/rentals/create', methods=['POST'])
+def rent_the_film():
+    data = request.get_json()
+    film_id = data.get('film_id')
+    customer_id = data.get('customer_id')
+    
+    inventory_film = db.session.query(
+        Inventory.inventory_id).filter(
+            Inventory.film_id == film_id).filter(
+            ~Inventory.inventory_id.in_(
+                db.session.query(Rental.inventory_id).filter(Rental.return_date == None)
+            )
+        ).first()
+    
+    if not inventory_film:
+        return jsonify({"error": "Sorry! No copies available"}), 404
+    
+    new_rental = Rental(
+            rental_date=datetime.now(),
+            inventory_id=inventory_film.inventory_id,
+            customer_id=customer_id,
+            staff_id=1,
+            return_date=None,
+            last_update=datetime.now(),
+        )
+    db.session.add(new_rental)
+    db.session.commit()
+    return jsonify({"message": "New Rental Created!", "id": new_rental.rental_id})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
