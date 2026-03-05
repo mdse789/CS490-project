@@ -177,3 +177,64 @@
 
 
 }
+
+.customer-form-modal input {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.customer-form-modal input:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+}
+
+.warning-note{
+  color: red;
+  font-weight: bold;
+  font-size: 0.9em;  
+}
+
+.form-buttons button:hover {
+  opacity: 0.9;
+}
+
+.confirm-delete-btn {
+  background-color: red; 
+  color: white;
+}
+
+
+
+.controls-wrapper {
+  display: flex;
+  flex-direction: column; 
+  gap: 15px;             
+  margin-bottom: 30px;
+  width: 100%;
+}
+
+.add-button {
+  background-color: #28a745;
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.1em;
+  cursor: pointer;
+  width: 300px;
+  align-items: right;
+
+  display: block;      
+  margin-left: auto;   
+  margin-right: 0;
+
+}
+
+
+

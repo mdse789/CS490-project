@@ -80,6 +80,8 @@ class Customer(db.Model):
     address_id = db.Column(db.Integer, db.ForeignKey('address.address_id'))
     create_date = db.Column(db.DateTime)
     last_update = db.Column(db.DateTime)
+    store_id = db.Column(db.String(3))
+    active = db.Column(db.String(3))
 
 class Address(db.Model):
     __tablename__ = 'address' 
@@ -90,6 +92,7 @@ class Address(db.Model):
     city_id = db.Column(db.Integer, db.ForeignKey('city.city_id'))
     postal_code = db.Column(db.String(50))
     phone = db.Column(db.String(50))
+    location = db.Column(db.Text, nullable=False)
 
 class City(db.Model):
     __tablename__ = 'city' 
@@ -249,6 +252,9 @@ def customer_details(id):
             Customer.last_name,
             Customer.email,
             Address.address,
+            Address.address2,
+            Address.postal_code,
+            Address.district,
             Address.phone,
             City.city,
             Country.country
@@ -268,7 +274,13 @@ def customer_details(id):
         "last_name": customer.last_name,
         "email": customer.email,
         "address": customer.address,
-        "phone": customer.phone
+        "address2": customer.address2,
+        "postal_code": customer.postal_code,
+        "district": customer.district,
+        "country": customer.country,
+        "phone": customer.phone,
+        "city": customer.city
+
     })
 
 @app.route("/api/top5films")
@@ -373,11 +385,12 @@ def add_customer():
 
         new_address = Address(
             address=data['address'],
-            address2=data['address2', ''],
+            address2=data.get('address2', ''),
             district=data.get('district'),
             city_id=city_record.city_id,
             postal_code=data.get('postal_code', ''),
-            phone=data['phone'] 
+            phone=data['phone'], 
+            location=func.ST_GeomFromText('POINT(0 0)')
         )
         db.session.add(new_address)
         db.session.flush()
@@ -393,11 +406,11 @@ def add_customer():
         db.session.add(new_customer)
         
         db.session.commit()
-        return jsonify({"message": "Customer created successfully!", "id": new_customer.customer_id})
+        return jsonify({"message": "Customer created successfully!", "id": new_customer.customer_id}), 201
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)}),500
     
 #Edit customer details 
 @app.route('/api/customers/edit/<int:id>', methods=['PUT'])
@@ -443,6 +456,28 @@ def edit_customer(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)})
+    
+    #Delete customer details 
+
+
+@app.route('/api/customers/delete/<int:id>', methods=['DELETE'])
+def delete_customer(id):
+    customer = Customer.query.get_or_404(id)
+    address_id = customer.address_id
+
+    try:
+        db.session.delete(customer)
+
+        address = Address.query.get(address_id)
+        if address:
+            db.session.delete(address)
+
+        db.session.commit()
+        return jsonify({"message": "Permanent deletion successful"}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 400
 
 @app.route('/api/customer_rentals/<int:id>')
 def get_customer_rentals(id):
