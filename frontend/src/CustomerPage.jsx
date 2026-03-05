@@ -12,8 +12,24 @@ function CustomerPage({ onBack }) {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [rentalHistory, setRentalHistory] = useState([]);
 
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState(null);
+  const openDeleteConfirm = (customer) => {
+    setCustomerToDelete(customer);
+    setIsDeleteModalOpen(true);
+  };
+
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [formData, setFormData] = useState({
+    first_name: "", last_name: "", email: "", address: "", address2: "", city: "", country: "", postal_code: "", phone: ""
+  });
+  const [errors, setErrors] = useState([]);
+
   const fetchCustomers = (page, query = "") => {
-    
+
     fetch(`http://127.0.0.1:5000/api/customer_all?page=${page}&search=${query}`)
       .then((res) => res.json())
       .then((data) => {
@@ -21,7 +37,7 @@ function CustomerPage({ onBack }) {
         setTotalPages(data.total_pages);
       })
       .catch((err) => console.error("Error fetching customer data", err));
-};
+  };
 
   useEffect(() => {
     fetchCustomers(currentPage, searchTerm);
@@ -40,7 +56,8 @@ const fetchRentalHistory = (customerId) => {
       .catch(err => console.error("Error fetching history:", err));
 };
 
-const handleCardClick = (customer) => {
+  const handleCardClick = (customer) => {
+
     fetch(`http://127.0.0.1:5000/api/customer_details/${customer.id}`)
       .then(res => res.json())
       .then(fullData => {
@@ -48,19 +65,121 @@ const handleCardClick = (customer) => {
         fetchRentalHistory(customer.id);
       })
       .catch(err => console.error("Error fetching details:", err));
-};
+  };
 
-  const handlePageJump = (e) => {
-  e.preventDefault();
-  const pageNum = parseInt(jumpPage);
+  const openAddForm = () => {
+    setEditId(null);
+    setFormData({ first_name: "", last_name: "", email: "", address: "", address2: "", city: "", district: "", country: "", postal_code: "", phone: "" });
+    setIsFormOpen(true);
+  };
 
-  if (pageNum >= 1 && pageNum <= totalPages) {
-    setCurrentPage(pageNum);
-    setJumpPage(""); 
-  } else {
-    alert(`Please enter a page between 1 and ${totalPages}`);
+  const openEditForm = async(e, customer) => {
+    e.stopPropagation(); 
+    setEditId(customer.id);
+
+    const response = await fetch(`http://127.0.0.1:5000/api/customer_details/${customer.id}`);
+    const data = await response.json();
+
+    setFormData({
+      first_name: data.first_name,
+      last_name: data.last_name,
+      email: data.email || "",
+      address: data.address || "",
+      address2: data.address2 || "",
+      city: data.city || "",
+      district: data.district || "",
+      country: data.country || "",
+      postal_code: data.postal_code || "",
+      phone: data.phone || ""
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+  
+    let validationErrors = [];
+    const emailRegex = /^[a-zA-Z0-9._]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    // Rule 1: Names (No Numbers)
+    if (/\d/.test(formData.first_name) || /\d/.test(formData.last_name)) {
+      validationErrors.push("First and Last names cannot contain numbers.");
+    }
+
+    if (!emailRegex.test(formData.email)) {
+      validationErrors.push("Please enter a valid email address (example: name@email.com).");
+  }
+
+    // Rule 2: Phone (Only Numbers)
+    if (!/^\d+$/.test(formData.phone)) {
+      validationErrors.push("Phone number must contain only digits (no dashes or spaces).");
+    }
+
+  // Rule 3: Postal Code (Length Check for Sakila)
+    if (formData.postal_code.length > 5) {
+      validationErrors.push("Postal code cannot be longer than 5 characters.");
+    }
+
+  // If there are errors, stop and show them
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors);
+      return; // Stop the fetch call
+    }
+
+  try {
+    const url = editId 
+      ? `http://127.0.0.1:5000/api/customers/edit/${editId}` 
+      : `http://127.0.0.1:5000/api/customers`;
+    
+    const response = await fetch(url, {
+      method: editId ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
+    const result = await response.json();
+
+    if (response.ok) {
+      setIsFormOpen(false);
+      fetchCustomers(currentPage, searchTerm);
+      setErrors([]); // Clear any leftover messages on success
+    } else {
+      setErrors([result.error || "A database error occurred."]);
+    }
+  } catch (err) {
+    setErrors(["Server is unreachable."]);
   }
 };
+
+
+
+  const handlePageJump = (e) => {
+    e.preventDefault();
+    const pageNum = parseInt(jumpPage);
+
+    if (pageNum >= 1 && pageNum <= totalPages) {
+      setCurrentPage(pageNum);
+      setJumpPage("");
+    } else {
+      alert(`Please enter a page between 1 and ${totalPages}`);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+    const response = await fetch(`http://127.0.0.1:5000/api/customers/delete/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (response.ok) {
+      setIsDeleteModalOpen(false); 
+      fetchCustomers(currentPage, searchTerm); 
+    } else {
+      const result = await response.json();
+      alert(result.error || "Constraint Error: Cannot delete customers with rental history.");
+    }
+  } catch (err) {
+    console.error("Delete failed:", err);
+  }
+  };
 
 const handleReturn = (rentalId) => {
     fetch(`http://127.0.0.1:5000/api/rentals/return/${rentalId}`, {
@@ -77,43 +196,56 @@ const handleReturn = (rentalId) => {
     })
     .catch(err => console.error("Error returning film:", err));
 };
- 
-return (
- <div>
-<div className="customer-page-containerC">
-    <div className="heads">
-      <button onClick={onBack}>Back to Home</button>
-      <h1>Customer Page</h1>
-    </div>  
-      
-      <p>Customer Search: Enter Name or Id</p>
-   <div className="search-barC">
-  <input
-    type="text"
-    placeholder="Search name or ID..."
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-  />
-  <button onClick={handleSearch}>Search</button>
-</div>
 
-      <div className="results-listC">
-        {customers.map((customer) => (
-          <div key={customer.id} className="customer-card" 
-          onClick={() =>handleCardClick(customer)}
-          style={{cursor: 'help'}}
-          >
-            <p>{"Id: "}{customer.id}</p>
-            <p>{"Name: "}{customer.first_name} {customer.last_name}</p>
-          </div>
-        ))}
+  return (
+    <div>
+      <div className="customer-page-containerC">
+        <div className="heads">
+          <button onClick={onBack}>Back to Home</button>
+          <h1>Customer Page</h1>
+        </div>
+
+        <p>Customer Search: Enter Name or Id</p>
+        <div className="controls-wrapper">
+          <button onClick={openAddForm} className="add-button"> + Add New Customer</button>
+        <div className="search-barC">
+          <input
+            type="text"
+            placeholder="Search name or ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <button onClick={handleSearch}>Search</button>
+        </div>
+        </div>
+
+
+        <div className="results-listC">
+          {customers.map((customer) => (
+            <div key={customer.id} className="customer-card"
+              onClick={() => handleCardClick(customer)}
+              style={{ cursor: 'help' }}
+            >
+              <p>{"Id: "}{customer.id}</p>
+              <p>{"Name: "}{customer.first_name} {customer.last_name}</p>
+              <div className="card-actions">
+                <button onClick={(e) => openEditForm(e, customer)}>Edit</button>
+                <button onClick={(e) => {
+                  e.stopPropagation();
+                  openDeleteConfirm(customer)}}
+                  >Delete</button>
+              </div>
+            </div>
+            
+          ))}
+        </div>
       </div>
-    </div>
 
-    <div className="pagination-controls">
-       <form onSubmit={handlePageJump} style={{ display: 'inline', marginLeft: '15px' }}>
-          <input 
-            type="number" 
+      <div className="pagination-controls">
+
+        <form onSubmit={handlePageJump} style={{ display: 'inline', marginLeft: '15px' }}>
+          <input
+            type="number"
             placeholder="Go to page"
             value={jumpPage}
             onChange={(e) => setJumpPage(e.target.value)}
@@ -166,6 +298,59 @@ return (
               </table>
             </div>
           </Modal>
+
+          <Modal open={isFormOpen} onClose={() => setIsFormOpen(false)}>
+        <form onSubmit={handleFormSubmit} className="customer-form-modal">
+          <h2>{editId ? "Edit Customer" : "Add New Customer"}</h2>
+          <input type="text" placeholder="First Name" value={formData.first_name} required 
+            onChange={e => setFormData({...formData, first_name: e.target.value})} />
+          <input type="text" placeholder="Last Name" value={formData.last_name} required 
+            onChange={e => setFormData({...formData, last_name: e.target.value})} />
+          <input type="email" placeholder="Email" value={formData.email} 
+            onChange={e => setFormData({...formData, email: e.target.value})} required/>
+          <input type="text" placeholder="Address" value={formData.address} required 
+            onChange={e => setFormData({...formData, address: e.target.value})} />
+          <input type="text" placeholder="Address Line 2" value={formData.address2} 
+            onChange={e => setFormData({...formData, address2: e.target.value})} />
+          <input type="text" placeholder="City" value={formData.city} required 
+            onChange={e => setFormData({...formData, city: e.target.value})} />
+          <input type="text" placeholder="Postal Code" value={formData.postal_code} required 
+            onChange={e => setFormData({...formData, postal_code: e.target.value})} />
+          <input type="text" placeholder="District/State" value={formData.district} required 
+            onChange={e => setFormData({...formData, district: e.target.value})} />
+          <input type="text" placeholder="Country" value={formData.country} required 
+            onChange={e => setFormData({...formData, country: e.target.value})} />
+          <input type="number" placeholder="Phone" value={formData.phone} required 
+            onChange={e => setFormData({...formData, phone: e.target.value})} />
+          <div className="form-buttons">
+            <button type="submit">Save</button>
+            <button type="button" onClick={() => setIsFormOpen(false)}>Cancel</button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        open={isDeleteModalOpen} 
+        onClose={() => setIsDeleteModalOpen(false)}
+      >
+        <div className="delete-confirm-modal">
+          <h2>Confirm Deletion</h2>
+          <p>Are you sure you want to permanently delete <strong>{customerToDelete?.first_name} {customerToDelete?.last_name}</strong>?</p>
+          <p className="warning-note">THIS CANNOT BE UNDONE</p>
+    
+          <div className="form-buttons">
+            <button 
+              className="confirm-delete-btn" 
+              onClick={() => handleDelete(customerToDelete.id)}
+            >
+              Yes, delete
+            </button>
+            <button type="button" onClick={() => setIsDeleteModalOpen(false)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
 
  </div>
   );
